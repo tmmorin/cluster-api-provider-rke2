@@ -19,6 +19,7 @@ package etcd
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"net"
 	"time"
 
@@ -161,7 +162,7 @@ func NewClient(ctx context.Context, config ClientConfiguration) (*Client, error)
 
 	etcdClient, err := clientv3.New(c)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to init etcd client")
+		return nil, errors.Wrap(err, fmt.Sprintf("unable to init etcd client (%v)", config))
 	}
 
 	callTimeout := config.CallTimeout
@@ -173,7 +174,7 @@ func NewClient(ctx context.Context, config ClientConfiguration) (*Client, error)
 	if err != nil {
 		closeErr := etcdClient.Close()
 
-		return nil, errors.Wrap(kerrors.NewAggregate([]error{err, closeErr}), "unable to create etcd client")
+		return nil, errors.Wrap(kerrors.NewAggregate([]error{err, closeErr}), fmt.Sprintf("unable to create etcd client (%v)", config))
 	}
 
 	return client, nil

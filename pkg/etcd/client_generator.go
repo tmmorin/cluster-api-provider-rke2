@@ -97,7 +97,8 @@ func (c *ClientGenerator) ForFirstAvailableNode(ctx context.Context, nodeNames [
 		return client, nil
 	}
 
-	return nil, errors.Wrap(kerrors.NewAggregate(errs), "could not establish a connection to any etcd node")
+	return nil, errors.Wrap(kerrors.NewAggregate(errs),
+	                        fmt.Sprintf("could not establish a connection to any etcd node (%v)", nodeNames))
 }
 
 // ForLeader takes a list of nodes and returns a client to the leader node.
