@@ -299,7 +299,7 @@ verify-gen: generate  ## Verify go generated files are up to date
 
 buildx-machine:
 	@docker buildx inspect $(MACHINE) || \
-		docker buildx create --name=$(MACHINE) --platform=$(TARGET_PLATFORMS)
+		docker buildx create --name=$(MACHINE) --platform=$(TARGET_PLATFORMS) --driver-opt env.https_proxy=proxy.rd.francetelecom.fr:8080 --driver-opt env.http_proxy=proxy.rd.francetelecom.fr:8080
 
 ALL_MANAGERS = rke2-bootstrap rke2-control-plane
 
@@ -331,8 +331,10 @@ docker-build-rke2-bootstrap:
 	DOCKER_BUILDKIT=1 BUILDX_BUILDER=$(MACHINE) docker buildx build \
 			--platform $(ARCH) \
 			--load \
+			-D \
 			--build-arg builder_image=$(GO_CONTAINER_IMAGE) \
 			--build-arg goproxy=$(GOPROXY) \
+			--build-arg https_proxy=http://proxy.rd.francetelecom.fr:8080 \
 			--build-arg package=./bootstrap \
 			--build-arg ldflags="$(LDFLAGS)" . -t $(BOOTSTRAP_IMG):$(TAG)
 	$(MAKE) set-manifest-image MANIFEST_IMG=$(BOOTSTRAP_IMG) MANIFEST_TAG=$(TAG) TARGET_RESOURCE="./bootstrap/config/default/manager_image_patch.yaml"
@@ -345,10 +347,12 @@ docker-build-rke2-control-plane:
 			--load \
 			--build-arg builder_image=$(GO_CONTAINER_IMAGE) \
 			--build-arg goproxy=$(GOPROXY) \
+			--build-arg https_proxy=http://proxy.rd.francetelecom.fr:8080 \
 			--build-arg package=./controlplane \
 			--build-arg ldflags="$(LDFLAGS)" . -t $(CONTROLPLANE_IMG):$(TAG)
 	$(MAKE) set-manifest-image MANIFEST_IMG=$(CONTROLPLANE_IMG) MANIFEST_TAG=$(TAG) TARGET_RESOURCE="./controlplane/config/default/manager_image_patch.yaml"
 	$(MAKE) set-manifest-pull-policy TARGET_RESOURCE="./controlplane/config/default/manager_pull_policy.yaml"
+
 
 ## --------------------------------------
 ## Testing
@@ -528,6 +532,7 @@ docker-build-and-push-rke2-bootstrap:
 			--platform $(TARGET_PLATFORMS) \
 			--push \
 			--sbom=true \
+			-D \
 			--attest type=provenance,mode=max \
 			--iidfile=$(IID_FILE) \
 			--build-arg builder_image=$(GO_CONTAINER_IMAGE) \
@@ -542,6 +547,7 @@ docker-build-and-push-rke2-controlplane:
 			--platform $(TARGET_PLATFORMS) \
 			--push \
 			--sbom=true \
+			-D \
 			--attest type=provenance,mode=max \
 			--iidfile=$(IID_FILE) \
 			--build-arg builder_image=$(GO_CONTAINER_IMAGE) \
